@@ -8,34 +8,35 @@ import (
 	"io"
 	"io/ioutil"
 	"math/rand"
+	sysnet "net"
 	"os"
+	"strings"
 	"time"
-	sysnet"net"
 
 	"github.com/pkg/errors"
 	"golang.org/x/time/rate"
 
-	lru "github.com/hashicorp/golang-lru"
+	"github.com/hashicorp/golang-lru"
 	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p"
-	relay "github.com/libp2p/go-libp2p-circuit"
-	connmgr "github.com/libp2p/go-libp2p-connmgr"
-	crypto "github.com/libp2p/go-libp2p-crypto"
-	discovery "github.com/libp2p/go-libp2p-discovery"
-	host "github.com/libp2p/go-libp2p-host"
-	dht "github.com/libp2p/go-libp2p-kad-dht"
-	dhtopts "github.com/libp2p/go-libp2p-kad-dht/opts"
-	net "github.com/libp2p/go-libp2p-net"
-	peer "github.com/libp2p/go-libp2p-peer"
-	peerstore "github.com/libp2p/go-libp2p-peerstore"
-	pnet "github.com/libp2p/go-libp2p-pnet"
-	protocol "github.com/libp2p/go-libp2p-protocol"
-	pubsub "github.com/libp2p/go-libp2p-pubsub"
-	stream "github.com/libp2p/go-libp2p-transport-upgrader"
+	"github.com/libp2p/go-libp2p-circuit"
+	"github.com/libp2p/go-libp2p-connmgr"
+	"github.com/libp2p/go-libp2p-crypto"
+	"github.com/libp2p/go-libp2p-discovery"
+	"github.com/libp2p/go-libp2p-host"
+	"github.com/libp2p/go-libp2p-kad-dht"
+	"github.com/libp2p/go-libp2p-kad-dht/opts"
+	"github.com/libp2p/go-libp2p-net"
+	"github.com/libp2p/go-libp2p-peer"
+	"github.com/libp2p/go-libp2p-peerstore"
+	"github.com/libp2p/go-libp2p-pnet"
+	"github.com/libp2p/go-libp2p-protocol"
+	"github.com/libp2p/go-libp2p-pubsub"
+	"github.com/libp2p/go-libp2p-transport-upgrader"
 	"github.com/libp2p/go-tcp-transport"
 	"github.com/multiformats/go-multiaddr"
 	"github.com/multiformats/go-multihash"
-	sm_yamux "github.com/whyrusleeping/go-smux-yamux"
+	"github.com/whyrusleeping/go-smux-yamux"
 	"go.uber.org/zap"
 )
 
@@ -278,13 +279,21 @@ func NewHost(ctx context.Context, options ...Option) (*Host, error) {
 	mask := sysnet.IPv4Mask(byte(255), byte(255), byte(0), byte(0))
 	filterIp := sysnet.ParseIP("169.254.89.1").Mask(mask)
 	filterNet := &sysnet.IPNet{filterIp, mask}
+	fmt.Println(filterNet.String())
 	opts := []libp2p.Option{
 		libp2p.ListenAddrStrings(fmt.Sprintf("/ip4/%s/tcp/%d", ip, cfg.Port)),
 		libp2p.AddrsFactory(func(addrs []multiaddr.Multiaddr) []multiaddr.Multiaddr {
+			j := 0
+			for _, addr := range addrs {
+				if !strings.Contains(addr.String(),"169.254.") {
+					addrs[j] = addr
+					j++
+				}
+			}
 			if extMultiAddr != nil {
 				return append(addrs, extMultiAddr)
 			}
-			return addrs
+			return addrs[:j]
 		}),
 		libp2p.Identity(sk),
 		libp2p.Transport(func(upgrader *stream.Upgrader) *tcp.TcpTransport {
