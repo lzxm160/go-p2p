@@ -10,6 +10,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestXX(t *testing.T) {
+	opts := []Option{
+		HostName("0.0.0.0"),
+		Port(1234),
+	}
+	host, err := NewHost(context.Background(), opts...)
+	fmt.Println(host.Addresses(),":",err)
+}
+
 func TestBroadcast(t *testing.T) {
 	runP2P := func(t *testing.T, options ...Option) {
 		ctx := context.Background()

@@ -10,6 +10,7 @@ import (
 	"math/rand"
 	"os"
 	"time"
+	sysnet"net"
 
 	"github.com/pkg/errors"
 	"golang.org/x/time/rate"
@@ -258,6 +259,7 @@ func NewHost(ctx context.Context, options ...Option) (*Host, error) {
 		if err != nil {
 			return nil, err
 		}
+		fmt.Println("extIP:",extIP)
 		masterKey := cfg.MasterKey
 		// If ID is not given use network address instead
 		if masterKey == "" {
@@ -272,6 +274,10 @@ func NewHost(ctx context.Context, options ...Option) (*Host, error) {
 			return nil, err
 		}
 	}
+	fmt.Println("ip:",ip)
+	mask := sysnet.IPv4Mask(byte(255), byte(255), byte(0), byte(0))
+	filterIp := sysnet.ParseIP("169.254.89.1").Mask(mask)
+	filterNet := &sysnet.IPNet{filterIp, mask}
 	opts := []libp2p.Option{
 		libp2p.ListenAddrStrings(fmt.Sprintf("/ip4/%s/tcp/%d", ip, cfg.Port)),
 		libp2p.AddrsFactory(func(addrs []multiaddr.Multiaddr) []multiaddr.Multiaddr {
@@ -286,6 +292,7 @@ func NewHost(ctx context.Context, options ...Option) (*Host, error) {
 		}),
 		libp2p.Muxer("/yamux/2.0.0", sm_yamux.DefaultTransport),
 		libp2p.ConnectionManager(connmgr.NewConnManager(cfg.ConnLowWater, cfg.ConnHighWater, cfg.ConnGracePeriod)),
+		libp2p.FilterAddresses(filterNet),
 	}
 	if !cfg.SecureIO {
 		opts = append(opts, libp2p.NoSecurity)
