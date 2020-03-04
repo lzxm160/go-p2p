@@ -5,18 +5,22 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
-func TestXX(t *testing.T) {
+func TestWindowsPrivetaAddress(t *testing.T) {
 	opts := []Option{
 		HostName("0.0.0.0"),
 		Port(1234),
 	}
 	host, err := NewHost(context.Background(), opts...)
-	fmt.Println(host.Addresses(),":",err)
+	require.NoError(t, err)
+	for _,addr:=range host.Addresses(){
+		require.False(t,strings.Contains(addr.String(),"169.254."))
+	}
 }
 
 func TestBroadcast(t *testing.T) {

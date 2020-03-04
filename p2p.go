@@ -282,18 +282,16 @@ func NewHost(ctx context.Context, options ...Option) (*Host, error) {
 	fmt.Println(filterNet.String())
 	opts := []libp2p.Option{
 		libp2p.ListenAddrStrings(fmt.Sprintf("/ip4/%s/tcp/%d", ip, cfg.Port)),
-		libp2p.AddrsFactory(func(addrs []multiaddr.Multiaddr) []multiaddr.Multiaddr {
-			j := 0
+		libp2p.AddrsFactory(func(addrs []multiaddr.Multiaddr) (ret []multiaddr.Multiaddr) {
 			for _, addr := range addrs {
 				if !strings.Contains(addr.String(),"169.254.") {
-					addrs[j] = addr
-					j++
+					ret=append(ret,addr)
 				}
 			}
 			if extMultiAddr != nil {
-				return append(addrs, extMultiAddr)
+				return append(ret, extMultiAddr)
 			}
-			return addrs[:j]
+			return
 		}),
 		libp2p.Identity(sk),
 		libp2p.Transport(func(upgrader *stream.Upgrader) *tcp.TcpTransport {
