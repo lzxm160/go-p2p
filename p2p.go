@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -36,6 +37,10 @@ import (
 	"github.com/multiformats/go-multihash"
 	sm_yamux "github.com/whyrusleeping/go-smux-yamux"
 	"go.uber.org/zap"
+)
+
+const (
+	disabledIP="169.254."
 )
 
 func init() {
@@ -274,11 +279,16 @@ func NewHost(ctx context.Context, options ...Option) (*Host, error) {
 	}
 	opts := []libp2p.Option{
 		libp2p.ListenAddrStrings(fmt.Sprintf("/ip4/%s/tcp/%d", ip, cfg.Port)),
-		libp2p.AddrsFactory(func(addrs []multiaddr.Multiaddr) []multiaddr.Multiaddr {
-			if extMultiAddr != nil {
-				return append(addrs, extMultiAddr)
+		libp2p.AddrsFactory(func(addrs []multiaddr.Multiaddr) (ret []multiaddr.Multiaddr) {
+			for _, addr := range addrs {
+				if !strings.Contains(addr.String(),disabledIP) {
+					ret=append(ret,addr)
+				}
 			}
-			return addrs
+			if extMultiAddr != nil {
+				return append(ret, extMultiAddr)
+			}
+			return
 		}),
 		libp2p.Identity(sk),
 		libp2p.Transport(func(upgrader *stream.Upgrader) *tcp.TcpTransport {
