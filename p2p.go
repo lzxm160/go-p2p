@@ -441,12 +441,13 @@ func (h *Host) AddBroadcastPubSub(topic string, callback HandleBroadcast) error 
 		for {
 			select {
 			case <-h.close:
-				fmt.Println("//////////////////////not come here:")
+				fmt.Println("//////////////////////not come here:",h.host.ID().String())
 				return
 			default:
 				ctx := context.Background()
 				msg, err := sub.Next(ctx)
 				if err != nil {
+					fmt.Println("//////////////////////sub.Next(ctx):",h.host.ID().String())
 					Logger().Error("Error when subscribing a broadcast message.", zap.Error(err))
 					continue
 				}
