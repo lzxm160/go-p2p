@@ -441,6 +441,7 @@ func (h *Host) AddBroadcastPubSub(topic string, callback HandleBroadcast) error 
 		for {
 			select {
 			case <-h.close:
+				fmt.Println("//////////////////////not come here:")
 				return
 			default:
 				ctx := context.Background()
