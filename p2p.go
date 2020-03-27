@@ -571,10 +571,10 @@ func (h *Host) Neighbors(ctx context.Context) ([]peerstore.PeerInfo, error) {
 
 // Close closes the host
 func (h *Host) Close() error {
-	close(h.close)
 	for _, sub := range h.subs {
 		sub.Cancel()
 	}
+	close(h.close)
 	if err := h.kad.Close(); err != nil {
 		return err
 	}
